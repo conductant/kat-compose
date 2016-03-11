@@ -1,0 +1,20 @@
+web:
+  image: nginx
+  environment:
+    - constraint:com.test.environment==web
+  ports:
+    - 8000:8000
+  links:
+    - redis
+
+app:
+  image: busybox
+  command: top
+  env_file: myenvs.compose
+  environment:
+    - DBUSER=test
+    - DBPASS=password
+    - constraint:com.test.environment==app
+
+redis:
+  image: redis

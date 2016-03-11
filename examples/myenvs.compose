@@ -1,0 +1,8 @@
+# environment variables
+DEBUG=True
+RELEASE_STAGE=development
+AWS_SECRET_ACCESS_KEY=blah
+AWS_ACCESS_KEY_ID=blahblah
+AWS_DYNAMODB_TABLE_PREFIX=''
+AWS_REGION=us-east
+REDIS_PASSWORD=redispass

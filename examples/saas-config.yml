@@ -1,0 +1,465 @@
+hub:
+  build: saas-mega/services/accounts
+  # command: /home/docker/serverconf/scripts/compose_init.sh
+  links:
+    # Create link to pgbouncer for compose's dependency mgmt
+    - hubpgbouncer:unused_link_hubpgbouncer
+    - sharedsession:shared_session_cache
+    - hubredis:cache
+    - hubredis:new_cache
+    - hubrabbitmq:queue
+    - lb
+  volumes:
+    - ./saas-mega/services/accounts/docker_io:/home/docker/docker_io
+    - ./hub-client:/home/docker/src/hub-client
+    - ./saas-mega/services/accounts/serverconf:/home/docker/serverconf
+  env_file: myenvs.compose
+  ports:
+    - "6001:80"
+  dns:
+    - 172.17.0.1
+  working_dir: "/home/docker/docker_io"
+
+hubworker:
+  build: saas-mega/services/accounts
+  # command: "/home/docker/serverconf/scripts/compose_init-worker.sh"
+  command: "/home/docker/serverconf/scripts/init-worker.sh"
+  links:
+    # Create link to pgbouncer for compose's dependency mgmt
+    - hubpgbouncer:unused_link_hubpgbouncer
+    - sharedsession:shared_session_cache
+    - hubredis:cache
+    - hubredis:new_cache
+    - hubrabbitmq:queue
+    - lb
+  volumes:
+    - ./saas-mega/services/accounts/docker_io:/home/docker/docker_io
+    - ./hub-client:/home/docker/src/hub-client
+    - ./saas-mega/services/accounts/serverconf:/home/docker/serverconf
+  env_file: myenvs.compose
+  dns:
+    - 172.17.0.1
+  working_dir: "/home/docker/docker_io"
+
+hubcron:
+  build: saas-mega/services/accounts
+  command: "/home/docker/serverconf/scripts/init-cron.sh"
+  links:
+    # Create link to pgbouncer for compose's dependency mgmt
+    - hubpgbouncer:unused_link_hubpgbouncer
+    - sharedsession:shared_session_cache
+    - hubredis:cache
+    - hubredis:new_cache
+    - hubrabbitmq:queue
+    - lb
+  volumes:
+    - ./saas-mega/services/accounts/docker_io:/home/docker/docker_io
+    - ./hub-client:/home/docker/src/hub-client
+    - ./saas-mega/services/accounts/serverconf:/home/docker/serverconf
+  env_file: myenvs.compose
+  dns:
+    - 172.17.0.1
+  working_dir: "/home/docker/docker_io"
+
+
+reghub:
+  build: saas-mega/services/repos
+  # command: "/home/docker/serverconf/scripts/compose_init.sh"
+  links:
+    # Create link to pgbouncer for compose's dependency mgmt
+    - reghubpgbouncer:unused_link_reghubpgbouncer
+    - sharedsession:shared_session_cache
+    - reghubredis:cache
+    - reghubrabbitmq:queue
+    - lb
+    - reghubelasticsearch:elasticsearch
+    - kafka_n_zk:kafka
+    - licenseserver
+  volumes:
+    - ./saas-mega/services/repos/docker_index:/home/docker/docker_index
+    - ./hub-client:/home/docker/src/hub-client
+    - ./saas-mega/services/repos/serverconf:/home/docker/serverconf
+    - ./elasticsearch:/etc/elasticsearch/
+  env_file: myenvs.compose
+  ports:
+    - "6011:80"
+  dns:
+    - 172.17.0.1
+  working_dir: "/home/docker/docker_index"
+
+reghubworker:
+  build: saas-mega/services/repos
+  # command: "/home/docker/serverconf/scripts/compose_init-worker.sh"
+  command: "/home/docker/serverconf/scripts/init-worker.sh"
+  links:
+    # Create link to pgbouncer for compose's dependency mgmt
+    - reghubpgbouncer:unused_link_reghubpgbouncer
+    - sharedsession:shared_session_cache
+    - reghubredis:cache
+    - reghubrabbitmq:queue
+    - lb
+    - reghubelasticsearch:elasticsearch
+    - kafka_n_zk:kafka
+    - licenseserver
+  volumes:
+    - ./saas-mega/services/repos/docker_index:/home/docker/docker_index
+    - ./hub-client:/home/docker/src/hub-client
+    - ./saas-mega/services/repos/serverconf:/home/docker/serverconf
+  environment:
+    - INDEX_PASSWORD
+  env_file: myenvs.compose
+  dns:
+    - 172.17.0.1
+  working_dir: "/home/docker/docker_index"
+
+reghubcron:
+  build: saas-mega/services/repos
+  command: "/home/docker/serverconf/scripts/init-cron.sh"
+  links:
+    # Create link to pgbouncer for compose's dependency mgmt
+    - reghubpgbouncer:unused_link_reghubpgbouncer
+    - sharedsession:shared_session_cache
+    - reghubredis:cache
+    - reghubrabbitmq:queue
+    - lb
+    - reghubelasticsearch:elasticsearch
+    - kafka_n_zk:kafka
+    - licenseserver
+  volumes:
+    - ./saas-mega/services/repos/docker_index:/home/docker/docker_index
+    - ./hub-client:/home/docker/src/hub-client
+    - ./saas-mega/services/repos/serverconf:/home/docker/serverconf
+    - ./elasticsearch:/etc/elasticsearch/
+  env_file: myenvs.compose
+  dns:
+    - 172.17.0.1
+  working_dir: "/home/docker/docker_index"
+
+hubdb:
+  build: postgres
+  ports:
+    - "6009:5432"  # arbitrary, but defined port for pgbouncer
+  environment:
+    POSTGRES_USER: hubdb
+    POSTGRES_PASSWORD: password
+
+reghubdb:
+  build: postgres
+  ports:
+    - "6019:5432"  # arbitrary, but defined port for pgbouncer
+  environment:
+    POSTGRES_USER: reghubdb
+    POSTGRES_PASSWORD: password
+
+hubredis:
+  image: redis
+  command: "redis-server --requirepass 'oneridiculouslylongpasswordbutnotthatlong'"
+
+reghubredis:
+  image: redis
+  command: "redis-server --requirepass 'oneridiculouslylongpasswordbutnotthatlong'"
+
+sharedsession:
+  image: redis
+  command: "redis-server --requirepass 'oneridiculouslylongpasswordbutnotthatlong'"
+
+hubrabbitmq:
+  image: rabbitmq
+
+reghubrabbitmq:
+  image: rabbitmq
+
+hub2:
+  build: "hub2-demo"
+  dockerfile: "dockerfiles/saas-config"
+  command: "node server"
+  ports:
+    - "7001:3000"
+  working_dir: "/opt/hub/app/.build"
+  environment:
+    DEBUG: "*"
+    ENV: local
+    HUB_API_BASE_URL: "https://hub.dev.docker.com"
+    REGISTRY_API_BASE_URL: "https://hub.dev.docker.com"
+  dns:
+    - 172.17.0.1
+
+dns:
+  build: dnsmasq
+  ports:
+    - "53:53"
+    - "53:53/udp"
+  environment:
+    - DOCKER_HOST
+  dns:
+    - 8.8.8.8
+
+lb:
+  # image: fish/haproxy:latest
+  build: haproxy
+  dns:
+    - 172.17.0.1
+  volumes:
+    - ./haproxy:/haproxy-override
+  ports:
+    - "80:80"
+    - "443:443"
+  links:
+    - dns
+
+reghubelasticsearch:
+  image: elasticsearch:1.5.2
+  volumes:
+    - ./elasticsearch:/usr/share/elasticsearch/config
+
+registryv2:
+  # image: docker/saas_dev_registry_v2:2.0.0
+  build: registry_v2
+  ports:
+    - "6021:5000"
+  volumes:
+    - ./registry_v2/data:/tmp/registry-dev
+    - ./registry_v2/config.yml:/go/src/github.com/docker/distribution/cmd/registry/config.yml
+    - ./registry_v2/token_roots.pem:/go/src/github.com/docker/distribution/cmd/registry/token_roots.pem
+  dns:
+    - 172.17.0.1
+
+registry2kafka:
+  image: docker/registry2kafka:latest
+  links:
+    - kafka_n_zk:kafka
+  ports:
+    - "8011:80"
+  # Sleep a bit to let ZK & Kafka get ready
+  command: bash -c "sleep 5 && exec ./run"
+
+registryv1:
+  build: docker-registry
+  ports:
+    - "6121:5000"
+  links:
+    - registryv1redis:cache
+  environment:
+    DOCKER_REGISTRY_CONFIG: /registry_v1_config.yml
+    INDEX_ENDPOINT: https://registry-hub.dev.docker.com
+    STANDALONE: "false"
+    DISABLE_TOKEN_AUTH: "false"
+    SETTINGS_FLAVOR: dev
+    PRIVILEGED_KEY: /dev-reg-pub.pem
+    PYTHONPATH: /docker-registry/
+    CACHE_REDIS_PASSWORD: oneridiculouslylongpasswordbutnotthatlong
+    STORAGE_PATH: /
+    CACHE_REDIS_DB: 1
+  volumes:
+    - ./registry_v1_config.yml:/registry_v1_config.yml
+    - ./docker-registry:/docker-registry
+    - ./saas-mega/services/repos/keys/dev-reg-pub.pem:/dev-reg-pub.pem
+    - ./registry_v2/data:/registry-v2
+  dns:
+    - 172.17.0.1
+
+registryv1redis:
+  image: redis
+  command: "redis-server --requirepass 'oneridiculouslylongpasswordbutnotthatlong'"
+
+hubauthorizer:
+  build: saas-mega/services/hub-garant
+  dns:
+    - 172.17.0.1
+  ports:
+    - "6051:8080"
+  volumes:
+    - ./conf.d/hub-authorizer/config.yml:/etc/hub-authorizer/config.yml
+    - ./conf.d/hub-authorizer/signing_key.json:/etc/garant/signing_key.json
+
+kafka_n_zk:
+  image: docker/kafka:latest
+  ports:
+    - "9092:9092"
+    - "2181:2181"
+  environment:
+    ADVERTISED_HOST: 172.17.0.1
+    ADVERTISED_PORT: 9092
+    KAFKA_CREATE_TOPICS: magicbus:1:1,repo_events:1:1,search_events:1:1
+
+cloudgw:
+  # static image if you don't need to develop the gateway
+  # image: docker/cloud-gateway:master
+  build: hub-gateway
+  volumes:
+    - ./cloud-gateway:/home/docker/hubgw
+  env_file: myenvs.compose
+  # uses the same redis instance as the gateway for shared session
+  links:
+    - hubgwredis
+  ports:
+    - "8040:80"
+  dns:
+    - 172.17.0.1
+
+hubgw:
+  # static image if you don't need to develop the gateway
+  # image: image: docker/hub-gateway:latest
+  build: hub-gateway
+  volumes:
+    - ./hub-gateway:/home/docker/hubgw
+  env_file: myenvs.compose
+  links:
+    - hubgwredis
+  ports:
+    - "6400:80"
+  dns:
+    - 172.17.0.1
+
+hubgwredis:
+  image: redis
+  command: "redis-server --requirepass 'oneridiculouslylongpasswordbutnotthatlong'"
+
+hubpgbouncer:
+  links:
+    # Link to hubdb for compose's dependency mgmt, but unused to be as realistic as possible
+    - hubdb:unused_link_hubdb
+  build: saas-mega/services/pgbouncer
+  environment:
+    - DB_USERNAME=hubdb
+    - DB_PASSWORD=password
+    - DB_PORT_5432_TCP_ADDR=hubdb.dev.docker.com
+    - DB_PORT_5432_TCP_PORT=6009
+    - DB_DATABASE_NAME=hubdb
+  ports:
+    - "6008:6543"
+  dns:
+    - 172.17.0.1
+
+reghubpgbouncer:
+  # Link to reghubdb for compose's dependency mgmt, but unused to be as realistic as possible
+  links:
+    - reghubdb:unused_link_reghubdb
+  build: saas-mega/services/pgbouncer
+  environment:
+    - DB_USERNAME=reghubdb
+    - DB_PASSWORD=password
+    - DB_PORT_5432_TCP_ADDR=reghubdb.dev.docker.com
+    - DB_PORT_5432_TCP_PORT=6019
+    - DB_DATABASE_NAME=reghubdb
+  ports:
+    - "6018:6543"
+  dns:
+    - 172.17.0.1
+
+licensedb:
+  image: postgres:9.4.1
+  dns:
+    - 172.17.0.1
+
+licenseserver:
+  build: dhe-license-server
+  links:
+    - licensedb
+  env_file:
+    - myenvs.compose
+  environment:
+    HUB_API_URL: https://hub-accounts.dev.docker.com/v2
+  ports:
+    - "9003:80"
+  volumes:
+    - ./dhe-license-server:/data:ro
+  dns:
+    - 172.17.0.1
+
+billing:
+  build: saas-mega/services/billing
+  links:
+    # billing will use some reghub
+    # tables for a short period of
+    # time while we migrate from v2
+    # to v3 of the api
+    - lb:unused_link_lb
+    - reghubpgbouncer:unused_link_reghubpgbouncer
+    - billingdb
+    - billingrabbitmq:queue
+    - licenseserver
+  env_file: myenvs.compose
+  volumes:
+    - ./saas-mega/services/billing/serverconf:/home/docker/serverconf
+    - ./saas-mega/services/billing/billing_api:/home/docker/billing_api
+  ports:
+    - "9004:80"
+  working_dir: "/home/docker/billing_api"
+  dns:
+    - 172.17.0.1
+
+billingworker:
+  build: saas-mega/services/billing
+  command: "/home/docker/serverconf/scripts/init-worker.sh"
+  links:
+    - lb:unused_link_lb
+    - reghubpgbouncer:unused_link_reghubpgbouncer  # see billing definition
+    - billingdb
+    - billingrabbitmq:queue
+    - licenseserver
+  env_file: myenvs.compose
+  volumes:
+    - ./saas-mega/services/billing/serverconf:/home/docker/serverconf
+    - ./saas-mega/services/billing/billing_api:/home/docker/billing_api
+  working_dir: "/home/docker/billing_api"
+  dns:
+    - 172.17.0.1
+
+billingcron:
+  build: saas-mega/services/billing
+  command: "/home/docker/serverconf/scripts/init-cron.sh"
+  links:
+    - lb:unused_link_lb
+    - reghubpgbouncer:unused_link_reghubpgbouncer  # see billing definition
+    - billingdb
+    - billingrabbitmq:queue
+    - licenseserver
+  env_file: myenvs.compose
+  volumes:
+    - ./saas-mega/services/billing/serverconf:/home/docker/serverconf
+    - ./saas-mega/services/billing/billing_api:/home/docker/billing_api
+  working_dir: "/home/docker/billing_api"
+  dns:
+    - 172.17.0.1
+
+billingdb:
+  image: postgres:9.4.5
+  ports:
+    - "6029:5432"  # arbitrary, but defined port
+  environment:
+    POSTGRES_USER: billingdb
+    POSTGRES_PASSWORD: password
+  dns:
+    - 172.17.0.1
+
+billingrabbitmq:
+  image: rabbitmq
+  dns:
+    - 172.17.0.1
+
+nautilusdb:
+  image: postgres:9.4.5
+  ports:
+    - 5432
+  environment:
+    POSTGRES_USER: nautilus
+    POSTGRES_PASSWORD: nautilus
+
+nautilus:
+  image: docker/nautilus:latest
+  ports:
+    - 12080:8080
+#  volumes:
+# Enable to be able to pull/push images via Nautilus
+#    - /var/run/docker.sock:/var/run/docker.sock
+  links:
+    - nautilusdb:nautilusdb
+  environment:
+    - DB_PASSWD=nautilus
+    - DB_USER=nautilus
+    - DB_HOST=nautilusdb
+    #- DB_PORT will be set by Nautilus start script
+    - APPCHECK_USERNAME=dummy
+    - APPCHECK_PASSWORD=dummy
+    - WHITELIST_DEFAULT_USERNAME=dummy

@@ -1,0 +1,42 @@
+version: '2'
+networks:
+  front:
+    driver: overlay
+  db:
+    driver: overlay
+
+services:
+  web:
+    image: nginx
+    environment:
+      - constraint:com.test.environment==web
+    ports:
+      - 8000:8000
+    networks:
+      - front
+
+  app:
+    image: busybox
+    command: top
+    environment:
+      - constraint:com.test.environment==app
+    networks:
+      - front
+      - db
+  db:
+    image: postgres
+    environment:
+      - constraint:com.test.environment==db
+    ports:
+      - 5432:5432
+    networks:
+      - db
+
+  cache:
+    image: redis
+    environment:
+      - constraint:com.test.environment==db
+    ports:
+      - 6379:6379
+    networks:
+      - db

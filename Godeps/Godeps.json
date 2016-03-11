@@ -1,0 +1,41 @@
+{
+	"ImportPath": "github.com/conductant/kat-compose",
+	"GoVersion": "go1.6",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/conductant/gohm/pkg/command",
+			"Rev": "fe5b51774ae61ab0e481e21e71b411e7bb630ac4"
+		},
+		{
+			"ImportPath": "github.com/conductant/gohm/pkg/encoding",
+			"Rev": "fe5b51774ae61ab0e481e21e71b411e7bb630ac4"
+		},
+		{
+			"ImportPath": "github.com/conductant/gohm/pkg/flag",
+			"Rev": "fe5b51774ae61ab0e481e21e71b411e7bb630ac4"
+		},
+		{
+			"ImportPath": "github.com/conductant/gohm/pkg/runtime",
+			"Rev": "fe5b51774ae61ab0e481e21e71b411e7bb630ac4"
+		},
+		{
+			"ImportPath": "github.com/conductant/gohm/pkg/version",
+			"Rev": "fe5b51774ae61ab0e481e21e71b411e7bb630ac4"
+		},
+		{
+			"ImportPath": "github.com/golang/glog",
+			"Rev": "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
+		},
+		{
+			"ImportPath": "github.com/golang/protobuf/proto",
+			"Rev": "0fd8c908d872c921af513ef5091964bbd2e0d904"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "a83829b6f1293c91addabc89d0571c246397bbf4"
+		}
+	]
+}

@@ -1,0 +1,74 @@
+{
+    "cluster": "devcluster",
+    "cron_collision_policy": "KILL_EXISTING",
+    "enable_hooks": false,
+    "environment": "prod",
+    "health_check_config": {
+        "endpoint": "/health",
+        "expected_response": "ok",
+        "expected_response_code": 0,
+        "health_checker": {
+            "http": {
+                "endpoint": "/health",
+                "expected_response": "ok",
+                "expected_response_code": 0
+            }
+        },
+        "initial_interval_secs": 15.0,
+        "interval_secs": 10.0,
+        "max_consecutive_failures": 0,
+        "timeout_secs": 1.0
+    },
+    "instances": 1,
+    "lifecycle": {
+        "http": {
+            "graceful_shutdown_endpoint": "/quitquitquit",
+            "port": "health",
+            "shutdown_endpoint": "/abortabortabort"
+        }
+    },
+    "max_task_failures": 1,
+    "name": "hello",
+    "priority": 0,
+    "production": false,
+    "role": "www-data",
+    "service": true,
+    "task": {
+        "constraints": [
+            {
+                "order": [
+                    "hello"
+                ]
+            }
+        ],
+        "finalization_wait": 30,
+        "max_concurrency": 0,
+        "max_failures": 1,
+        "name": "hello",
+        "processes": [
+            {
+                "cmdline": "\\n while true; do\\n      echo hello world\\n      sleep 10\\n    done\\n  ",
+                "daemon": false,
+                "ephemeral": false,
+                "final": false,
+                "max_failures": 1,
+                "min_duration": 5,
+                "name": "hello"
+            }
+        ],
+        "resources": {
+            "cpu": 1.0,
+            "disk": 134217728,
+            "ram": 134217728
+        }
+    },
+    "update_config": {
+        "batch_size": 1,
+        "max_per_shard_failures": 0,
+        "max_total_failures": 0,
+        "restart_threshold": 60,
+        "rollback_on_failure": true,
+        "wait_for_batch_completion": false,
+        "watch_secs": 45
+    }
+}
