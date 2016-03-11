@@ -14,7 +14,7 @@ type Load struct {
 	ProjectName  string   `flag:"p,          The project name"`
 	Dump         bool     `flag:"dump,       Dump the project structure as JSON"`
 
-	Parsed map[interface{}]interface{}
+	Parsed map[string]interface{}
 }
 
 func (this *Load) Help(w io.Writer) {
@@ -29,11 +29,7 @@ func (this *Load) Run(args []string, w io.Writer) error {
 
 	if this.Dump {
 		glog.Infoln("Parsed:", this.Parsed)
-		var out interface{} = this.Parsed
-		if m, is := out.(map[interface{}]interface{}); is {
-			out = convert(m)
-		}
-		buff, err := json.MarshalIndent(out, "", "  ")
+		buff, err := json.MarshalIndent(this.Parsed, "", "  ")
 		if err != nil {
 			return err
 		}
@@ -69,7 +65,7 @@ func (this *Load) loadByMap(args []string, w io.Writer) error {
 			return err
 		}
 	}
-	this.Parsed = view
+	this.Parsed = convert(view)
 	return nil
 }
 
