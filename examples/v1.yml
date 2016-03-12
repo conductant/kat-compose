@@ -3,11 +3,25 @@ web:
   environment:
     - constraint:com.test.environment==web
   ports:
-    - 8000:8000
+    - '8000:8000'
   links:
     - redis
 
-app:
+http_example_docker_executor:
+  image: http_example
+  entrypoint: python /tmp/http_example.py 8888
+  expose:
+    - "8888"
+  ports:
+    - "8888:8888/tcp"
+  environment:
+    - DBUSER=http
+    - DBPASS=http_password
+    - constraint:com.test.environment==app
+  cpu_shares: 1
+  cpu_quota: 50000
+
+worker:
   image: busybox
   command: top
   env_file: myenvs.compose

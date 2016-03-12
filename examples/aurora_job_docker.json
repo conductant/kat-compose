@@ -1,0 +1,74 @@
+{
+    "cluster": "devcluster",
+    "contact": "davidchung@localhost",
+    "container": {
+        "docker": {
+            "image": "http_example",
+            "parameters": [
+                {
+                    "name": "entrypoint",
+                    "value": "python /tmp/http_example.py 8888"
+                },
+                {
+                    "name": "expose",
+                    "value": "8888"
+                },
+                {
+                    "name": "publish",
+                    "value": "8888:8888/tcp"
+                }
+            ]
+        }
+    },
+    "cron_collision_policy": "KILL_EXISTING",
+    "enable_hooks": false,
+    "environment": "test",
+    "health_check_config": {
+        "health_checker": {
+            "http": {
+                "endpoint": "/health",
+                "expected_response": "ok",
+                "expected_response_code": 0
+            }
+        },
+        "initial_interval_secs": 15.0,
+        "interval_secs": 10.0,
+        "max_consecutive_failures": 0,
+        "timeout_secs": 1.0
+    },
+    "instances": 1,
+    "lifecycle": {
+        "http": {
+            "graceful_shutdown_endpoint": "/quitquitquit",
+            "port": "health",
+            "shutdown_endpoint": "/abortabortabort"
+        }
+    },
+    "max_task_failures": 1,
+    "name": "http_example_docker_executor",
+    "priority": 0,
+    "production": false,
+    "role": "davidchung",
+    "service": true,
+    "task": {
+        "constraints": [],
+        "finalization_wait": 30,
+        "max_concurrency": 0,
+        "max_failures": 1,
+        "name": "http_docker_example",
+        "processes": [],
+        "resources": {
+            "cpu": 0.4,
+            "disk": 67108864,
+            "ram": 33554432
+        }
+    },
+    "update_config": {
+        "batch_size": 1,
+        "max_per_shard_failures": 0,
+        "max_total_failures": 0,
+        "rollback_on_failure": true,
+        "wait_for_batch_completion": false,
+        "watch_secs": 45
+    }
+}
