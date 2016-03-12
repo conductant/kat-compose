@@ -6,6 +6,10 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "git.apache.org/thrift.git/lib/go/thrift",
+			"Rev": "5025a302c6dd877ff045f3db729805f76c785675"
+		},
+		{
 			"ImportPath": "github.com/conductant/gohm/pkg/command",
 			"Rev": "fe5b51774ae61ab0e481e21e71b411e7bb630ac4"
 		},
@@ -18,7 +22,15 @@
 			"Rev": "fe5b51774ae61ab0e481e21e71b411e7bb630ac4"
 		},
 		{
+			"ImportPath": "github.com/conductant/gohm/pkg/resource",
+			"Rev": "fe5b51774ae61ab0e481e21e71b411e7bb630ac4"
+		},
+		{
 			"ImportPath": "github.com/conductant/gohm/pkg/runtime",
+			"Rev": "fe5b51774ae61ab0e481e21e71b411e7bb630ac4"
+		},
+		{
+			"ImportPath": "github.com/conductant/gohm/pkg/template",
 			"Rev": "fe5b51774ae61ab0e481e21e71b411e7bb630ac4"
 		},
 		{
@@ -32,6 +44,14 @@
 		{
 			"ImportPath": "github.com/golang/protobuf/proto",
 			"Rev": "0fd8c908d872c921af513ef5091964bbd2e0d904"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "3e5cd1ed149001198e582f9d3f5bfd564cde2896"
+		},
+		{
+			"ImportPath": "gopkg.in/check.v1",
+			"Rev": "4f90aeace3a26ad7021961c297b22c42160c7b25"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
