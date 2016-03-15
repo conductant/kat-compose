@@ -61,7 +61,7 @@ func (suite *TestSuiteAurora) TestConnectAurora(c *C) {
 			}
 			summary.Job.TaskConfig.Constraints[constraint] = true
 
-			m := encoding.MarshalMap(summary, "", map[string]encoding.OverrideFunc{
+			m := encoding.MarshalMap(summary, map[string]encoding.OverrideFunc{
 				".job.taskConfig.executorConfig.data": func(v interface{}) interface{} {
 					s, ok := v.(string)
 					if !ok {
@@ -78,6 +78,42 @@ func (suite *TestSuiteAurora) TestConnectAurora(c *C) {
 			j, err := json.MarshalIndent(m, "  ", "  ")
 			c.Assert(err, IsNil)
 			c.Log(string(j))
+
+			// going backwards
+			summary2 := new(api.JobSummary)
+			encoding.UnmarshalMap(m, summary2, map[string]encoding.OverrideFunc{
+				".job.taskConfig.executorConfig.data": func(v interface{}) interface{} {
+					m, ok := v.(map[string]interface{})
+					if !ok {
+						panic("not ok")
+					}
+					buff, err := json.Marshal(m)
+					if err != nil {
+						panic(err)
+					}
+					return string(buff)
+				},
+			})
+
+			m2 := encoding.MarshalMap(summary, map[string]encoding.OverrideFunc{
+				".job.taskConfig.executorConfig.data": func(v interface{}) interface{} {
+					s, ok := v.(string)
+					if !ok {
+						panic("not ok")
+					}
+					m := map[string]interface{}{}
+					err := json.Unmarshal([]byte(s), &m)
+					if err != nil {
+						panic(err)
+					}
+					return m
+				},
+			})
+			j2, err := json.MarshalIndent(m2, "  ", "  ")
+			c.Assert(err, IsNil)
+			c.Log(string(j2))
+
+			c.Assert(string(j), Equals, string(j2))
 		}
 	}
 }
