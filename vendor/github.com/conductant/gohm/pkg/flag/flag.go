@@ -65,12 +65,18 @@ func RegisterFlags(name string, val interface{}, fs *flag.FlagSet) {
 				switch fv := fv.(type) {
 				case bool:
 					fs.BoolVar(ptr.(*bool), f, fv, d)
-				case []bool:
-					if len(fv) == 0 {
-						// Special case where we allocate an empty list - otherwise it's default.
-						v.Field(i).Set(reflect.ValueOf([]bool{}))
-					}
-					fs.Var(&boolListProxy{list: ptr.(*[]bool)}, f, d)
+				case string:
+					fs.StringVar(ptr.(*string), f, fv, d)
+				case uint:
+					fs.UintVar(ptr.(*uint), f, fv, d)
+				case uint64:
+					fs.Uint64Var(ptr.(*uint64), f, fv, d)
+				case int64:
+					fs.Int64Var(ptr.(*int64), f, fv, d)
+				case int:
+					fs.IntVar(ptr.(*int), f, fv, d)
+				case float64:
+					fs.Float64Var(ptr.(*float64), f, fv, d)
 				case time.Duration:
 					fs.DurationVar(ptr.(*time.Duration), f, fv, d)
 				case []time.Duration:
@@ -79,59 +85,108 @@ func RegisterFlags(name string, val interface{}, fs *flag.FlagSet) {
 						v.Field(i).Set(reflect.ValueOf([]time.Duration{}))
 					}
 					fs.Var(&durationListProxy{list: ptr.(*[]time.Duration)}, f, d)
-				case float64:
-					fs.Float64Var(ptr.(*float64), f, fv, d)
-				case []float64:
-					if len(fv) == 0 {
-						// Special case where we allocate an empty list - otherwise it's default.
-						v.Field(i).Set(reflect.ValueOf([]float64{}))
-					}
-					fs.Var(&float64ListProxy{list: ptr.(*[]float64)}, f, d)
-				case int:
-					fs.IntVar(ptr.(*int), f, fv, d)
-				case []int:
-					if len(fv) == 0 {
-						// Special case where we allocate an empty list - otherwise it's default.
-						v.Field(i).Set(reflect.ValueOf([]int{}))
-					}
-					fs.Var(&intListProxy{list: ptr.(*[]int)}, f, d)
-				case int64:
-					fs.Int64Var(ptr.(*int64), f, fv, d)
-				case []int64:
-					if len(fv) == 0 {
-						// Special case where we allocate an empty list - otherwise it's default.
-						v.Field(i).Set(reflect.ValueOf([]int64{}))
-					}
-					fs.Var(&int64ListProxy{list: ptr.(*[]int64)}, f, d)
-				case string:
-					fs.StringVar(ptr.(*string), f, fv, d)
-				case []string:
-					if len(fv) == 0 {
-						// Special case where we allocate an empty list - otherwise it's default.
-						v.Field(i).Set(reflect.ValueOf([]string{}))
-					}
-					fs.Var(&stringListProxy{list: ptr.(*[]string)}, f, d)
-				case uint:
-					fs.UintVar(ptr.(*uint), f, fv, d)
-				case []uint:
-					if len(fv) == 0 {
-						// Special case where we allocate an empty list - otherwise it's default.
-						v.Field(i).Set(reflect.ValueOf([]uint{}))
-					}
-					fs.Var(&uintListProxy{list: ptr.(*[]uint)}, f, d)
-				case uint64:
-					fs.Uint64Var(ptr.(*uint64), f, fv, d)
-				case []uint64:
-					if len(fv) == 0 {
-						// Special case where we allocate an empty list - otherwise it's default.
-						v.Field(i).Set(reflect.ValueOf([]uint64{}))
-					}
-					fs.Var(&uint64ListProxy{list: ptr.(*[]uint64)}, f, d)
 				default:
 					// We only register if the field is a concrete vale and not a pointer
 					// since we don't automatically allocate zero value structs to fill the field slot.
-					if field.Type.Kind() == reflect.Struct {
+					switch field.Type.Kind() {
+
+					case reflect.String:
+						fs.Var(&aliasProxy{
+							fieldType:  field.Type,
+							ptr:        ptr,
+							fromString: stringFromString,
+							toString: func(v interface{}) string {
+								return fmt.Sprint("%v", v)
+							},
+						}, f, d)
+					case reflect.Bool:
+						fs.Var(&aliasProxy{
+							fieldType:  field.Type,
+							ptr:        ptr,
+							fromString: boolFromString,
+							toString: func(v interface{}) string {
+								return fmt.Sprint("%v", v)
+							},
+						}, f, d)
+					case reflect.Float64:
+						fs.Var(&aliasProxy{
+							fieldType:  field.Type,
+							ptr:        ptr,
+							fromString: float64FromString,
+							toString: func(v interface{}) string {
+								return fmt.Sprint("%v", v)
+							},
+						}, f, d)
+					case reflect.Int:
+						fs.Var(&aliasProxy{
+							fieldType:  field.Type,
+							ptr:        ptr,
+							fromString: intFromString,
+							toString: func(v interface{}) string {
+								return fmt.Sprint("%v", v)
+							},
+						}, f, d)
+					case reflect.Int64:
+						fs.Var(&aliasProxy{
+							fieldType:  field.Type,
+							ptr:        ptr,
+							fromString: int64FromString,
+							toString: func(v interface{}) string {
+								return fmt.Sprint("%v", v)
+							},
+						}, f, d)
+					case reflect.Uint:
+						fs.Var(&aliasProxy{
+							fieldType:  field.Type,
+							ptr:        ptr,
+							fromString: uintFromString,
+							toString: func(v interface{}) string {
+								return fmt.Sprint("%v", v)
+							},
+						}, f, d)
+					case reflect.Uint64:
+						fs.Var(&aliasProxy{
+							fieldType:  field.Type,
+							ptr:        ptr,
+							fromString: uint64FromString,
+							toString: func(v interface{}) string {
+								return fmt.Sprint("%v", v)
+							},
+						}, f, d)
+					case reflect.Struct:
 						RegisterFlags(f, ptr, fs)
+					case reflect.Slice:
+						et := field.Type.Elem()
+						proxy := &sliceProxy{
+							fieldType: field.Type,
+							elemType:  et,
+							slice:     ptr,
+							defaults:  reflect.ValueOf(fv).Len() > 0,
+							toString: func(v interface{}) string {
+								return fmt.Sprint("%v", v)
+							},
+						}
+						fs.Var(proxy, f, d)
+						switch {
+						// Checking for string is placed here first because other types are
+						// convertible to string as well.
+						case reflect.TypeOf(string("")).ConvertibleTo(et):
+							proxy.fromString = stringFromString
+						case reflect.TypeOf(bool(true)).ConvertibleTo(et):
+							proxy.fromString = boolFromString
+						case reflect.TypeOf(float64(1.)).ConvertibleTo(et):
+							proxy.fromString = float64FromString
+						case reflect.TypeOf(int(1)).ConvertibleTo(et):
+							proxy.fromString = intFromString
+						case reflect.TypeOf(int64(1)).ConvertibleTo(et):
+							proxy.fromString = int64FromString
+						case reflect.TypeOf(uint(1)).ConvertibleTo(et):
+							proxy.fromString = uintFromString
+						case reflect.TypeOf(uint64(1)).ConvertibleTo(et):
+							proxy.fromString = uint64FromString
+						case reflect.TypeOf(time.Second).AssignableTo(et):
+							proxy.fromString = durationFromString
+						}
 					}
 				}
 			}
@@ -139,197 +194,115 @@ func RegisterFlags(name string, val interface{}, fs *flag.FlagSet) {
 	}
 }
 
-// Supports default values.  This means that if the slice was initialized with value, setting
-// via flag will wipe out the existing value.
-type stringListProxy struct {
-	list *[]string
-	set  bool // set to true on first time Set is called.
+func stringFromString(s string) (interface{}, error) {
+	return s, nil
 }
 
-func (this *stringListProxy) Set(value string) error {
-	if this.set {
-		*this.list = append(*this.list, value)
-	} else {
-		// false means we have default value, now wipe it out
-		*this.list = []string{value}
-		this.set = true
+func boolFromString(s string) (interface{}, error) {
+	value, err := strconv.ParseBool(s)
+	if err != nil {
+		return false, err
 	}
-	return nil
-}
-func (this *stringListProxy) String() string {
-	return strings.Join(*this.list, ",")
+	return value, nil
 }
 
-// Supports default values.  This means that if the slice was initialized with value, setting
-// via flag will wipe out the existing value.
-type intListProxy struct {
-	list *[]int
-	set  bool // set to true on first time Set is called.
+func float64FromString(s string) (interface{}, error) {
+	value, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return float64(0), err
+	}
+	return value, nil
 }
 
-func (this *intListProxy) Set(str string) error {
-	value, err := strconv.Atoi(str)
+func intFromString(s string) (interface{}, error) {
+	value, err := strconv.Atoi(s)
+	if err != nil {
+		return int(0), err
+	}
+	return value, nil
+}
+
+func int64FromString(s string) (interface{}, error) {
+	value, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return int64(0), err
+	}
+	return value, nil
+}
+
+func uintFromString(s string) (interface{}, error) {
+	value, err := strconv.ParseUint(s, 10, 32)
+	if err != nil {
+		return uint(0), err
+	}
+	return value, nil
+}
+
+func uint64FromString(s string) (interface{}, error) {
+	value, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		return uint64(0), err
+	}
+	return value, nil
+}
+
+func durationFromString(s string) (interface{}, error) {
+	value, err := time.ParseDuration(s)
+	if err != nil {
+		return false, err
+	}
+	return value, nil
+}
+
+// For a list of types that are convertible to string
+type aliasProxy struct {
+	fieldType  reflect.Type
+	fromString func(string) (interface{}, error) // conversion from string
+	toString   func(interface{}) string          // to string
+	ptr        interface{}                       // the Pointer to the slice
+}
+
+func (this *aliasProxy) Set(value string) error {
+	v, err := this.fromString(value)
 	if err != nil {
 		return err
 	}
-	if this.set {
-		*this.list = append(*this.list, value)
-	} else {
-		// false means we have default value, now wipe it out
-		*this.list = []int{value}
-		this.set = true
-	}
+	newValue := reflect.ValueOf(reflect.ValueOf(v).Convert(this.fieldType).Interface())
+	reflect.ValueOf(this.ptr).Elem().Set(newValue)
 	return nil
 }
-func (this *intListProxy) String() string {
-	list := make([]string, len(*this.list))
-	for i, v := range *this.list {
-		list[i] = strconv.Itoa(v)
-	}
-	return strings.Join(list, ",")
+func (this *aliasProxy) String() string {
+	return this.toString(reflect.ValueOf(this.ptr).Elem().Interface())
 }
 
-// Supports default values.  This means that if the slice was initialized with value, setting
-// via flag will wipe out the existing value.
-type int64ListProxy struct {
-	list *[]int64
-	set  bool // set to true on first time Set is called.
+// For a list of types that are convertible to string
+type sliceProxy struct {
+	fieldType  reflect.Type
+	elemType   reflect.Type                      // the element type
+	fromString func(string) (interface{}, error) // conversion from string
+	toString   func(interface{}) string          // to string
+	slice      interface{}                       // the Pointer to the slice
+	defaults   bool                              // set to true on first time Set is called.
 }
 
-func (this *int64ListProxy) Set(str string) error {
-	value, err := strconv.ParseInt(str, 10, 64)
+func (this *sliceProxy) Set(value string) error {
+	v, err := this.fromString(value)
 	if err != nil {
 		return err
 	}
-	if this.set {
-		*this.list = append(*this.list, value)
-	} else {
-		// false means we have default value, now wipe it out
-		*this.list = []int64{value}
-		this.set = true
+	newElement := reflect.ValueOf(reflect.ValueOf(v).Convert(this.elemType).Interface())
+	if this.defaults {
+		reflect.ValueOf(this.slice).Elem().Set(reflect.Zero(this.fieldType))
+		this.defaults = false
 	}
+	reflect.ValueOf(this.slice).Elem().Set(reflect.Append(reflect.ValueOf(this.slice).Elem(), newElement))
 	return nil
 }
-func (this *int64ListProxy) String() string {
-	list := make([]string, len(*this.list))
-	for i, v := range *this.list {
-		list[i] = strconv.FormatInt(v, 10)
-	}
-	return strings.Join(list, ",")
-}
-
-// Supports default values.  This means that if the slice was initialized with value, setting
-// via flag will wipe out the existing value.
-type float64ListProxy struct {
-	list *[]float64
-	set  bool // set to true on first time Set is called.
-}
-
-func (this *float64ListProxy) Set(str string) error {
-	value, err := strconv.ParseFloat(str, 64)
-	if err != nil {
-		return err
-	}
-	if this.set {
-		*this.list = append(*this.list, value)
-	} else {
-		// false means we have default value, now wipe it out
-		*this.list = []float64{value}
-		this.set = true
-	}
-	return nil
-}
-func (this *float64ListProxy) String() string {
-	list := make([]string, len(*this.list))
-	for i, v := range *this.list {
-		list[i] = strconv.FormatFloat(v, 'E', -1, 64)
-	}
-	return strings.Join(list, ",")
-}
-
-// Supports default values.  This means that if the slice was initialized with value, setting
-// via flag will wipe out the existing value.
-type boolListProxy struct {
-	list *[]bool
-	set  bool // set to true on first time Set is called.
-}
-
-func (this *boolListProxy) Set(str string) error {
-	value, err := strconv.ParseBool(str)
-	if err != nil {
-		return err
-	}
-	if this.set {
-		*this.list = append(*this.list, value)
-	} else {
-		// false means we have default value, now wipe it out
-		*this.list = []bool{value}
-		this.set = true
-	}
-	return nil
-}
-func (this *boolListProxy) String() string {
-	list := make([]string, len(*this.list))
-	for i, v := range *this.list {
-		list[i] = strconv.FormatBool(v)
-	}
-	return strings.Join(list, ",")
-}
-
-// Supports default values.  This means that if the slice was initialized with value, setting
-// via flag will wipe out the existing value.
-type uint64ListProxy struct {
-	list *[]uint64
-	set  bool // set to true on first time Set is called.
-}
-
-func (this *uint64ListProxy) Set(str string) error {
-	value, err := strconv.ParseUint(str, 10, 64)
-	if err != nil {
-		return err
-	}
-	if this.set {
-		*this.list = append(*this.list, value)
-	} else {
-		// false means we have default value, now wipe it out
-		*this.list = []uint64{value}
-		this.set = true
-	}
-	return nil
-}
-func (this *uint64ListProxy) String() string {
-	list := make([]string, len(*this.list))
-	for i, v := range *this.list {
-		list[i] = strconv.FormatUint(v, 10)
-	}
-	return strings.Join(list, ",")
-}
-
-// Supports default values.  This means that if the slice was initialized with value, setting
-// via flag will wipe out the existing value.
-type uintListProxy struct {
-	list *[]uint
-	set  bool // set to true on first time Set is called.
-}
-
-func (this *uintListProxy) Set(str string) error {
-	value, err := strconv.ParseUint(str, 10, 32)
-	if err != nil {
-		return err
-	}
-	if this.set {
-		*this.list = append(*this.list, uint(value))
-	} else {
-		// false means we have default value, now wipe it out
-		*this.list = []uint{uint(value)}
-		this.set = true
-	}
-	return nil
-}
-func (this *uintListProxy) String() string {
-	list := make([]string, len(*this.list))
-	for i, v := range *this.list {
-		list[i] = strconv.FormatUint(uint64(v), 10)
+func (this *sliceProxy) String() string {
+	list := []string{}
+	for i := 0; i < reflect.ValueOf(this.slice).Elem().Len(); i++ {
+		str := this.toString(reflect.ValueOf(this.slice).Elem().Index(i).Interface())
+		list = append(list, str)
 	}
 	return strings.Join(list, ",")
 }

@@ -1,6 +1,10 @@
 package aurora
 
 import (
+	"encoding/json"
+	"git.apache.org/thrift.git/lib/go/thrift"
+	"github.com/conductant/kat-compose/pkg/aurora/api"
+	"github.com/conductant/kat-compose/pkg/encoding"
 	. "gopkg.in/check.v1"
 	"os"
 	"testing"
@@ -24,4 +28,43 @@ func schedulerHostPort() string {
 }
 
 func (suite *TestSuiteAurora) TestConnectAurora(c *C) {
+	c.Assert(schedulerHostPort(), Not(Equals), "")
+
+	trans, err := thrift.NewTHttpPostClient("http://" + schedulerHostPort() + "/api")
+	c.Assert(err, IsNil)
+	err = trans.Open()
+	c.Assert(err, IsNil)
+
+	protocolFactory := thrift.NewTJSONProtocolFactory()
+	client := api.NewReadOnlySchedulerClientFactory(trans, protocolFactory)
+	defer client.Transport.Close()
+
+	c.Log(client)
+
+	resp, err := client.GetRoleSummary()
+	c.Assert(err, IsNil)
+	for summary, _ := range resp.GetResult_().GetRoleSummaryResult_().Summaries {
+		c.Log("Role=", summary.Role, ",Count=", summary.JobCount, ",CronJobCount=", summary.CronJobCount)
+
+		resp, err := client.GetJobSummary(summary.Role)
+		c.Assert(err, IsNil)
+		for summary, _ := range resp.GetResult_().GetJobSummaryResult_().Summaries {
+
+			// Fake some data
+			constraint := &api.Constraint{
+				Name: "const1",
+				Constraint: &api.TaskConstraint{
+					Limit: &api.LimitConstraint{
+						Limit: 2,
+					},
+				},
+			}
+			summary.Job.TaskConfig.Constraints[constraint] = true
+
+			m := encoding.MarshalMap(summary)
+			j, err := json.MarshalIndent(m, "  ", "  ")
+			c.Assert(err, IsNil)
+			c.Log(string(j))
+		}
+	}
 }
