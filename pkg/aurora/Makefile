@@ -7,7 +7,7 @@ SCHEDULER_HOSTPORT?="192.168.33.7:8081"
 
 test-aurora: gen-thrift
 	SCHEDULER_HOSTPORT=$(SCHEDULER_HOSTPORT) \
-	${GODEP} go test ./... -check.vv -v ${TEST_ARGS}
+	${GODEP} go test . -check.vv -v ${TEST_ARGS}
 
 
 install-thrift:

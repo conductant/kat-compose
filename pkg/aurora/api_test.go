@@ -61,7 +61,20 @@ func (suite *TestSuiteAurora) TestConnectAurora(c *C) {
 			}
 			summary.Job.TaskConfig.Constraints[constraint] = true
 
-			m := encoding.MarshalMap(summary)
+			m := encoding.MarshalMap(summary, "", map[string]encoding.OverrideFunc{
+				".job.taskConfig.executorConfig.data": func(v interface{}) interface{} {
+					s, ok := v.(string)
+					if !ok {
+						panic("not ok")
+					}
+					m := map[string]interface{}{}
+					err := json.Unmarshal([]byte(s), &m)
+					if err != nil {
+						panic(err)
+					}
+					return m
+				},
+			})
 			j, err := json.MarshalIndent(m, "  ", "  ")
 			c.Assert(err, IsNil)
 			c.Log(string(j))
