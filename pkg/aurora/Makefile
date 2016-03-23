@@ -1,13 +1,13 @@
 all: test-aurora
 
 clean:
-	-rm has-thrift gen-thrift
+	-rm .thrift-*
 
 SCHEDULER_HOSTPORT?="192.168.33.7:8081"
 
-test-aurora: gen-thrift
+test-aurora:
 	SCHEDULER_HOSTPORT=$(SCHEDULER_HOSTPORT) \
-	${GODEP} go test . -check.vv -v ${TEST_ARGS}
+	${GODEP} go test . -logtostderr -check.vv -v ${TEST_ARGS}
 
 
 install-thrift:
@@ -16,7 +16,6 @@ ifeq ($(wildcard ./has-thrift),)
 	brew install boost
 	brew install thrift
 	go get git.apache.org/thrift.git/lib/go/thrift
-	touch has-thrift
 endif
 
 API_DIR:=github.com/conductant/kat-compose/pkg/aurora
@@ -27,6 +26,5 @@ ifeq ($(wildcard ./gen-thrift),)
 	-rm -rf $(TARGET)/api
 	-mkdir -p $(TARGET)/api
 	thrift -r --gen go:package=api,package_prefix=$(PACKAGE_PREFIX) --out $(TARGET) ./api.thrift
-	touch gen-thrift
 endif
 

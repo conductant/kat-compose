@@ -1,0 +1,112 @@
+{
+    "cronCollisionPolicy": "KILL_EXISTING",
+    "cronSchedule": "",
+    "instanceCount": 1,
+    "key": {
+	"environment": "prod",
+	"name": "hello",
+	"role": "www-data"
+    },
+    "owner": {
+	"user": "vagrant"
+    },
+    "taskConfig": {
+	"constraints": [
+            {
+		"name": "const1",
+		"constraint": {
+		    "limit": {
+			"limit": 2
+		    }
+		}
+            }
+	],
+	"contactEmail": null,
+	"container": {
+            "mesos": {}
+	},
+	"diskMb": 128,
+	"executorConfig": {
+            "data": {
+		"cluster": "devcluster",
+		"cron_collision_policy": "KILL_EXISTING",
+		"enable_hooks": false,
+		"environment": "prod",
+		"health_check_config": {
+		    "health_checker": {
+			"http": {
+			    "endpoint": "/health",
+			    "expected_response": "ok",
+			    "expected_response_code": 0
+			}
+		    },
+		    "initial_interval_secs": 15,
+		    "interval_secs": 10,
+		    "max_consecutive_failures": 0,
+		    "timeout_secs": 1
+		},
+		"lifecycle": {
+		    "http": {
+			"graceful_shutdown_endpoint": "/quitquitquit",
+			"port": "health",
+			"shutdown_endpoint": "/abortabortabort"
+		    }
+		},
+		"max_task_failures": 1,
+		"name": "hello",
+		"priority": 0,
+		"production": false,
+		"role": "www-data",
+		"service": true,
+		"task": {
+		    "constraints": [
+			{
+			    "order": [
+				"hello"
+			    ]
+			}
+		    ],
+		    "finalization_wait": 30,
+		    "max_concurrency": 0,
+		    "max_failures": 1,
+		    "name": "hello",
+		    "processes": [
+			{
+			    "cmdline": "\n    while true; do\n      echo hello world\n      sleep 10\n    done\n  ",
+			    "daemon": false,
+			    "ephemeral": false,
+			    "final": false,
+			    "max_failures": 1,
+			    "min_duration": 5,
+			    "name": "hello"
+			}
+		    ],
+		    "resources": {
+			"cpu": 1,
+			"disk": 1.34217728e+08,
+			"ram": 1.34217728e+08
+		    }
+		}
+            },
+            "name": "AuroraExecutor"
+	},
+	"isService": true,
+	"job": {
+            "environment": "prod",
+            "name": "hello",
+            "role": "www-data"
+	},
+	"maxTaskFailures": 1,
+	"metadata": [],
+	"numCpus": 1,
+	"owner": {
+            "user": "vagrant"
+	},
+	"priority": 0,
+	"production": false,
+	"ramMb": 128,
+	"requestedPorts": {},
+	"taskLinks": {},
+	"tier": null
+    }
+}
